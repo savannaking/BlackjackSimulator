@@ -18,15 +18,14 @@ namespace Blackjack
             Console.WriteLine("Enter the number of players, up to six.");
             var numberOfPlayers = Convert.ToInt32(Console.ReadLine());
 
-            Game game = new Game(numberOfDecks, numberOfPlayers);
+            Console.WriteLine("Enter the bet amount.");
+            var bet = Convert.ToInt32(Console.ReadLine());
 
-            //shuffle the deck 
-            game.Deck.Shuffle();
+            Console.WriteLine("Enter the # of hands to simulate.");
+            var numberOfHands = Convert.ToInt32(Console.ReadLine());
 
-            //deal to each player, including dealer
-            game.Deal();
-
-            //reset
+            Game game = new Game(numberOfDecks, numberOfPlayers, bet);
+            game.Play(numberOfHands);
         }
     }
 }

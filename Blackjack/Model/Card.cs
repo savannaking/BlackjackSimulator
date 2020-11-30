@@ -14,7 +14,7 @@ namespace Blackjack
         Clubs
     }
 
-    public enum FaceValue
+    public enum FaceValue        
     {
         Two,
         Three,
@@ -35,5 +35,34 @@ namespace Blackjack
     {
         public Suit Suit { get; set; }
         public FaceValue FaceValue { get; set; }
+
+        public int CardScore
+        {
+            get {
+                switch (this.FaceValue)
+                {
+                    case (FaceValue.Two):
+                        return 2;
+                    case (FaceValue.Three):
+                        return 3;
+                    case (FaceValue.Four):
+                        return 4;
+                    case (FaceValue.Five):
+                        return 5;
+                    case (FaceValue.Six):
+                        return 6;
+                    case (FaceValue.Seven):
+                        return 7;
+                    case (FaceValue.Eight):
+                        return 8;
+                    case (FaceValue.Nine):
+                        return 9;
+                    case (FaceValue.Ace):
+                        return 11;
+                    default:
+                        return 10;
+                }
+            }
+        }
     }
 }

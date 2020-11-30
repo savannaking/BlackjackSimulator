@@ -53,10 +53,5 @@ namespace Blackjack
 
             this.Cards = cards;
         }
-
-        public void Shuffle()
-        {
-            GameFunctions.Shuffle(this);
-        }
     }
 }

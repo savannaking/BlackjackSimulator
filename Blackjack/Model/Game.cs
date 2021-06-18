@@ -13,7 +13,6 @@ namespace Blackjack.Model
         public List<Player> Players { get; set; }
         public Dealer Dealer { get; set; }
         public int CurrentCount { get; set; }
-        public decimal Bet { get; set; }
 
 
         public Game(int numberOfDecks, int numberOfPlayers, decimal bet)
@@ -24,20 +23,23 @@ namespace Blackjack.Model
             Players = new List<Player>() { };
 
             //one player is testing the counting strategy, the rest are using a basic strategy - may add ability to change this later
-            Players.Add(new Counter(this));
+            //Players.Add(new Counter(this, bet));
 
-            for (int i = 1; i < numberOfPlayers; i++)
+            for (int i = 1; i <= numberOfPlayers; i++)
             {
-                Players.Add(new Player(this)); //uses basic strategy
+                Players.Add(new Player(this, bet)); //uses basic strategy
             }
 
-            Dealer dealer = new Dealer(this);
-
-            Bet = bet;
+            Dealer = new Dealer(this);
         }
 
-        public void Play(int numberOfHands)
+        public void Play()
         {
+            foreach (var player in Players)
+            {
+                player.TotalChipsValue -= player.Bet;
+            }
+
             //the dealer shuffles the deck 
             Dealer.Shuffle();
 
@@ -47,14 +49,13 @@ namespace Blackjack.Model
             {
                 Dealer.Deal();
 
-                for (int i = 0; i < Players.Count; i++)
+                for(int i = 0; i < Players.Count; i++)
                 {
-                    Players[i].Play();
+                    Players[i].Play(i);
                 }
-
+                Console.WriteLine(String.Format("Dealer reveals a {0} of {1}",
+                    Dealer.Hand.Last().Face(), Dealer.Hand.Last().Suit));
                 Dealer.Play();
-
-                CalculatePayouts();
             }
             else
             {
@@ -62,8 +63,6 @@ namespace Blackjack.Model
                 Dealer.Shuffle();
                 Dealer.Deal();
             }
-
-            //reset     
         }
 
         public void CalculatePayouts()
@@ -72,49 +71,70 @@ namespace Blackjack.Model
             {
                 if (Dealer.HasBlackjack)
                 {
-                    foreach (Player player in Players)
+                    Dealer.WinCount++;
+
+                    Console.WriteLine("Dealer has blackjack. :( ");
+                    for(int i = 0; i < Players.Count; i++)
                     {
+                        var player = Players[i];
                         if (player.TakeInsuranceBet)
                         {
                             //they break even
-                            player.CurrentWinnings += Bet;
+                            player.CurrentWinnings = player.Bet;
+                            player.TotalChipsValue += player.CurrentWinnings;
+                            Console.WriteLine(String.Format("Player {0} wins insurance bet of {1}", i, player.Bet / 2));
+                        }
+                        else if (player.HasBlackjack)
+                        {
+                            Console.WriteLine(String.Format("Player {0} has blackjack!! Returning bet to player.", i));
+                            player.CurrentWinnings += player.Bet;
+                            player.TotalChipsValue += player.CurrentWinnings;
+                            player.WinCount++;
                         }
                         else
                         {
+                            Console.WriteLine(String.Format("Player {0} lost bet of ${1}", i, player.Bet));
                             player.CurrentWinnings = 0;
-                        }
-                        Dealer.WinCount++;
-                    }
+                        }                    }
                 }
                 else
                 {
-                    foreach (Player player in Players)
+                    for (int i = 0; i < Players.Count; i++)
                     {
+                        var player = Players[i];
+
                         if (player.TakeInsuranceBet)
                         {
-                            player.CurrentWinnings = 0;
+                            //they lose this bet
+                            Console.WriteLine(String.Format("Player {0} loses insurance bet of {1}", i, player.Bet / 2));
                         }
+
                         if (player.Busted)
                         {
-                            player.CurrentWinnings = 0;
+                            Console.WriteLine(String.Format("Player {0} busted and lost bet of ${1}", i, player.Bet));
+                            Dealer.WinCount++;
                         }
                         else
                         {
                             if (player.HasBlackjack)
                             {
-                                player.CurrentWinnings = Bet * 1.5m;
-                                player.TotalWinnings += player.CurrentWinnings;
+                                Console.WriteLine(String.Format("Player {0} has blackjack and won ${1}.", i, player.Bet * 1.5m));
+                                player.CurrentWinnings = (player.Bet * 1.5m) + player.Bet;
+                                player.TotalChipsValue += player.CurrentWinnings;
                                 player.WinCount++;
                             }
                             else if (player.CurrentHandScore > Dealer.CurrentHandScore)
                             {
-                                player.CurrentWinnings = Bet * 2;
-                                player.TotalWinnings += player.CurrentWinnings;
+                                Console.WriteLine(String.Format("Player {0} won ${1}.", i, player.Bet));
+                                player.CurrentWinnings = player.Bet * 2;
+                                player.TotalChipsValue += player.CurrentWinnings;
                                 player.WinCount++;
                             }
                             else
                             {
-                                player.CurrentWinnings = Bet * -1;
+                                player.CurrentWinnings = 0;
+                                Console.WriteLine(String.Format("Player {0} lost bet of ${1}", i, player.Bet));
+                                Dealer.WinCount++;
                             }
                         }
 
@@ -123,12 +143,34 @@ namespace Blackjack.Model
             }
             else //dealer busted
             {
+                Console.WriteLine("Dealer busted.");
+                for (int i = 0; i < Players.Count; i++)
+                {
+                    var player = Players[i];
+                    if (!player.Busted)
+                    {
+                        Console.WriteLine(String.Format("Player {0} won ${1}.", i, player.Bet));
+                        player.CurrentWinnings = player.Bet * 2;
+                        player.TotalChipsValue += player.CurrentWinnings;
+                        player.WinCount++;
 
+                    }
+                    else
+                    {
+                        player.CurrentWinnings = 0;
+                        Console.WriteLine(String.Format("Player {0} busted and lost bet of ${1}", i, player.Bet));
+                    }
+                }
             }
         }
 
-            //if dealer doesn't have blackjack and you take insurance you lose your insurance bet which is half your original, plus original
-            //if he does, you come out even 2-1 on your 1/2 insurance bet
+        public void Reset()
+        {
+            foreach(var player in Players)
+            {
+                player.Reset();
+            }
+            Dealer.Reset();
         }
 
         public void UpdateCount(Card lastCardDealt)

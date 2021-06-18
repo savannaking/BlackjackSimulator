@@ -36,6 +36,41 @@ namespace Blackjack
         public Suit Suit { get; set; }
         public FaceValue FaceValue { get; set; }
 
+        public string Face()
+        {
+            switch (this.FaceValue)
+            {
+                case FaceValue.Two:
+                    return "Two";
+                case FaceValue.Three:
+                    return "Three";
+                case FaceValue.Four:
+                    return "Four";
+                case FaceValue.Five:
+                    return "Five";
+                case FaceValue.Six:
+                    return "Six";
+                case FaceValue.Seven:
+                    return "Seven";
+                case FaceValue.Eight:
+                    return "Eight";
+                case FaceValue.Nine:
+                    return "Nine";
+                case FaceValue.Ten:
+                    return "Ten";
+                case FaceValue.Jack:
+                    return "Jack";
+                case FaceValue.Queen:
+                    return "Queen";
+                case FaceValue.King:
+                    return "King";
+                case FaceValue.Ace:
+                    return "Ace";
+                default:
+                    return null;
+            }
+        }
+
         public int CardScore
         {
             get {

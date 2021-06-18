@@ -8,11 +8,11 @@ namespace Blackjack.Model.Actors
 {
     public class Counter : Player
     {
-        public Counter(Game game) : base(game)
+        public Counter(Game game, decimal bet) : base(game, bet)
         {
         }
 
-        public override void Play()
+        public override void Play(int i)
         {
         }
     }

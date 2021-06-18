@@ -12,12 +12,10 @@ namespace Blackjack
         public List<Card> Hand { get; set; }
         public Game Game { get; set; }
         public bool TakeInsuranceBet { get; set; }
-        //will add this when adding the ability to give players different bets, for now
-        //all players make the same bet for every round
-        //public int CurrentBet { get; set; }
         public int WinCount { get; set; }
         public decimal CurrentWinnings { get; set; }
-        public decimal TotalWinnings { get; set; }
+        public decimal TotalChipsValue { get; set; }
+        public decimal Bet { get; set; }
 
         public bool Busted { 
             get
@@ -52,32 +50,36 @@ namespace Blackjack
             }
         }
 
-        public Player(Game game)
+        public Player(Game game, decimal bet)
         {
             Hand = new List<Card>();
+            Bet = bet;
+            TotalChipsValue = 500;
+            Game = game;
         }
 
-        public virtual void Play()
+        public virtual void Play(int i)
         {
             switch (CurrentHandScore)
             {
                 case int score when score < 10:
-                    Hit();
+                    Hit(i);
                     break;
                 case int score when score == 10 || score == 11:
                     if (Game.Dealer.VisibleHand.Any(x => x.FaceValue == FaceValue.Ace)) //dealer's upturned card is Ace
-                        Stay(); //everyone has to stay - move this, probably 
+                        Stay(i); //everyone has to stay - move this, probably 
                     else
-                        DoubleDown(); //unless dealer has an ace
+                        //DoubleDown(); //unless dealer has an ace
+                        Hit(i); //for now
                     break;
                 case int score when score >= 12 && score <= 16:
                     if (Game.Dealer.CurrentHandScore >= 2 && Game.Dealer.CurrentHandScore <= 6)
-                        Stay();
+                        Stay(i);
                     else if (Game.Dealer.CurrentHandScore >= 7)
-                        Hit();
+                        Hit(i);
                     break;
                 case int score when score >= 17:
-                    Stay();
+                    Stay(i);
                     break;
             }
         }
@@ -88,15 +90,23 @@ namespace Blackjack
             //double your bet
         }
 
-        public virtual void Hit()
+        public virtual void Hit(int i)
         {
-            Game.Dealer.DealToPlayer(this);
-            Play();
+            Console.WriteLine(String.Format("Player {0} hit", i));
+            Game.Dealer.DealToPlayer(this, i);
+            Play(i);
         }
 
-        public void Stay()
+        public virtual void Stay(int i)
         {
-            //method should stay for terminology/readability's sake, but the action here is to do nothing
+            Console.WriteLine(String.Format("Player {0} stays", i));
+        }
+
+        public void Reset()
+        {
+            Hand = new List<Card>();
+            TakeInsuranceBet = false;
+            CurrentWinnings = 0;
         }
     }
 }

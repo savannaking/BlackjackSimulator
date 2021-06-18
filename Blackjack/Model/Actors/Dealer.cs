@@ -10,7 +10,7 @@ namespace Blackjack.Model
 {
     public class Dealer : Player
     {
-        public Dealer(Game game) : base(game)
+        public Dealer(Game game, decimal bet = 0) : base(game, bet)
         {
 
         }
@@ -27,7 +27,7 @@ namespace Blackjack.Model
         {
             get
             {
-                return Hand.GetRange(1, Hand.Count);
+                return Hand.GetRange(1, Hand.Count-1);
             }
         }
 
@@ -39,13 +39,14 @@ namespace Blackjack.Model
             }
         }
 
-        public override void Play()
+        public override void Play(int i = 0)
         {
             //lower than 17, dealer hits until they hit 17
             if (CurrentHandScore < 17)
                 Hit();
             else
-                Stay();
+                if (!Busted)
+                    Stay();
         }
 
         public void Deal()
@@ -57,7 +58,7 @@ namespace Blackjack.Model
             {
                 for (int j = 0; j < Game.Players.Count; j++)
                 {
-                    DealToPlayer(Game.Players[j]);
+                    DealToPlayer(Game.Players[j], j);
                 }
                 DealToDealer();
                 i++;
@@ -67,23 +68,28 @@ namespace Blackjack.Model
         public void HandleInsuranceBets()
         {
             //if your score is 20 you should take the insurance bet
-            foreach (Player player in Game.Players)
+            for (int i = 0; i < Game.Players.Count; i++)
             {
-                if (player.GetType() == typeof(Counter))
+                if (Game.Players[i].GetType() == typeof(Counter))
                 {
                     //add logic for counting strategy here later
                 }
-                else if (player.CurrentHandScore == 20)
+                else if (Game.Players[i].CurrentHandScore == 20)
                 {
-                    player.TakeInsuranceBet = true;
+                    Game.Players[i].TakeInsuranceBet = true;
+                    Game.Players[i].TotalChipsValue -= Game.Players[i].Bet / 2;
+                    Console.WriteLine(String.Format("Player {0} bet ${1} for insurance", i, Game.Players[i].Bet / 2));
                 }
             }
         }
 
-        public void DealToPlayer(Player player)
+        public void DealToPlayer(Player player, int i)
         {
             player.Hand.Add(Game.Deck.Cards[Game.Deck.remainingCards - 1]);
             Game.Deck.Cards.RemoveAt(Game.Deck.remainingCards - 1);
+
+            Console.WriteLine(String.Format("Player {0} was dealt a {1} of {2}",
+                i, Game.Players[i].Hand.Last().Face(), Game.Players[i].Hand.Last().Suit));
 
             Game.UpdateCount(player.Hand.Last());
         }
@@ -93,21 +99,38 @@ namespace Blackjack.Model
             Hand.Add(Game.Deck.Cards[Game.Deck.remainingCards - 1]);
             Game.Deck.Cards.RemoveAt(Game.Deck.remainingCards - 1);
 
-            if (Hand.Count > 1) //first card is not shown 
+            if (Hand.Count > 1) 
             {
-                Game.UpdateCount(UpCard);
-            }
+                if (Hand.Count == 2)
+                {
+                    Console.WriteLine(String.Format("Dealer was dealt a downturned card",
+                        Hand.Last().Face(), Hand.Last().Suit));
+                }
 
-            if (UpCard.FaceValue == FaceValue.Ace)
+                Game.UpdateCount(UpCard);
+                if (VisibleHand.Any(x => x.FaceValue == FaceValue.Ace))
+                {
+                    Console.WriteLine("Dealer has an ace. Taking insurance bets.");
+                    HandleInsuranceBets();
+                }
+            }
+            else
             {
-                HandleInsuranceBets();
+                Console.WriteLine(String.Format("Dealer was dealt a {0} of {1}",
+                     Hand.Last().Face(), Hand.Last().Suit));
             }
         }
 
-        public override void Hit()
+        public override void Hit(int i = 0)
         {
             DealToDealer();
+            Console.WriteLine(String.Format("Dealer hit and was dealt a {0} of {1}", Hand.Last().FaceValue, Hand.Last().Suit));
             Play();
+        }
+
+        public override void Stay(int i = 0)
+        {
+            Console.WriteLine("Dealer stays");
         }
 
         public void Shuffle()
